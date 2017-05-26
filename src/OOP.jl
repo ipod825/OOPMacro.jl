@@ -2,24 +2,17 @@ module OOP
 export @class, @super
 
 include("fnUtil.jl")
-
+include("clsUtil.jl")
 
 ClsMethods = Dict{Symbol, Dict{String, Expr}}()
 ClsFields = Dict(:Any=>[])
 
-macro class(ClsName, Cbody)
-    if isa(ClsName, Expr)
-        ParentClsName = ClsName.args[2]
-        AbsParentClsName = Symbol(string("Abstract", ParentClsName))
-        ClsName = ClsName.args[1]
-    else
-        ParentClsName = :Any
-        AbsParentClsName = :Any
-    end
-    AbsClsName = Symbol(string("Abstract", ClsName))
 
-    #= ParentCls = eval(ParentClsName) =#
-    #= fields = [parse(string("$name::",fieldtype(ParentCls, name))) for name in fieldnames(ParentCls)] =#
+macro class(ClsName, Cbody)
+    ClsName, ParentClsName = getCAndP(ClsName)
+    AbsClsName = getAbstractCls(ClsName)
+    AbsParentClsName = getAbstractCls(ParentClsName)
+
     fields = copy(ClsFields[ParentClsName])
 
     method_str = String[]
@@ -61,6 +54,7 @@ macro class(ClsName, Cbody)
         end
     end
 
+
     # Keep fields name in OOP module scope. Used when another class inherits ClsName
     ClsFields[ClsName] = fields
 
@@ -90,6 +84,7 @@ macro class(ClsName, Cbody)
     end
 
 
+    # eval type definition and method definition so for each type/method in user scope, we have a correspondence in OOP scope. This enables us to determine which parent function to use in @super.
     for c in clsDefExpr eval(c) end
     for m in methodsExpr eval(m) end
 
