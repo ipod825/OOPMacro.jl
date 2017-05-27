@@ -1,4 +1,4 @@
-using OOP
+using OOPMacro
 using Base.Test
 
 identityNotInOOP(x)=x

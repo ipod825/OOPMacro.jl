@@ -1,4 +1,4 @@
-module OOP
+module OOPMacro
 export @class, @super
 
 include("fnUtil.jl")
@@ -44,8 +44,8 @@ macro class(ClsName, Cbody)
                 append!(method_str, [string(block)])
 
                 fname = getFnName(block)
-                append!(fname.args, [:(OOPT<:$AbsClsName)])
-                setFnSelf!(block, :($self::OOPT))
+                append!(fname.args, [:(OOPMacroT<:$AbsClsName)])
+                setFnSelf!(block, :($self::OOPMacroT))
                 setFnName!(block, fname)
                 append!(method_str, [string(block)])
             end
@@ -55,7 +55,7 @@ macro class(ClsName, Cbody)
     end
 
 
-    # Keep fields name in OOP module scope. Used when another class inherits ClsName
+    # Keep fields name in OOPMacro module scope. Used when another class inherits ClsName
     ClsFields[ClsName] = fields
 
     if length(cons)>0
@@ -84,12 +84,12 @@ macro class(ClsName, Cbody)
     end
 
 
-    # eval type definition and method definition so for each type/method in user scope, we have a correspondence in OOP scope. This enables us to determine which parent function to use in @super.
+    # eval type definition and method definition so for each type/method in user scope, we have a correspondence in OOPMacro scope. This enables us to determine which parent function to use in @super.
     for c in clsDefExpr eval(c) end
     for m in methodsExpr eval(m) end
 
 
-    # Escape here because we want ClsName and the methods be defined in user scope instead of OOP module scope.
+    # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
     esc(Expr(:block, clsDefExpr..., methodsExpr...))
 end
 
@@ -109,7 +109,7 @@ macro super(ParentClsName, Types, FCall)
     fname = getFnName(FCall, withoutGeneric=true)
     identifier = string(which(eval(fname), eval(argTypes)))
     identifier = split(identifier, ") at ")[1] * ")"
-    identifier = replace(identifier, r"OOP.", "")
+    identifier = replace(identifier, r"OOPMacro.", "")
     identifier = replace(identifier, " ", "")
     method = copy(ClsMethods[ParentClsName][identifier])
 

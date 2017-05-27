@@ -1,4 +1,4 @@
-using OOP
+using OOPMacro
 using Base.Test
 
 @class SimpleCls begin
