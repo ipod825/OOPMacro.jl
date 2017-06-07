@@ -80,3 +80,9 @@ function getFnName(fun; withoutGeneric=false)
         end
     end
 end
+
+function setFnSelfType!(fun, ClsName)
+    self = getFnSelf(fun)
+    setFnSelf!(fun, :($self::$ClsName))
+end
+

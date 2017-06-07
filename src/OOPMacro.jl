@@ -4,25 +4,29 @@ export @class, @super
 include("fnUtil.jl")
 include("clsUtil.jl")
 
-ClsMethods = Dict{Symbol, Dict{String, Expr}}()
-ClsFields = Dict(:Any=>[])
+#= ClsMethods = Dict{Symbol, Dict{Expr, Expr}}() =#
+ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
+ClsFields = Dict(:Any=>Set{Expr}())
 
 
 macro class(ClsName, Cbody)
-    ClsName, ParentClsName = getCAndP(ClsName)
+    ClsName, ParentClsNameLst = getCAndP(ClsName)
     AbsClsName = getAbstractCls(ClsName)
-    AbsParentClsName = getAbstractCls(ParentClsName)
+    AbsParentClsName = getAbstractCls(ParentClsNameLst)
 
-    fields = copy(ClsFields[ParentClsName])
+    ClsFields[ClsName] = fields = copyFields(ParentClsNameLst, ClsFields)
+    ClsMethods[ClsName] = methods = Dict{Expr,Expr}()
 
-    method_str = String[]
+
     cons = Any[]
     hasInit = false
 
     # record fields and methods separately
     for (i, block) in enumerate(Cbody.args)
-        if isa(block, Symbol) || block.head == :(::)
-            append!(fields, [block])
+        if isa(block, Symbol)
+            union!(fields, [:($block::Any)])
+        elseif block.head == :(::)
+            union!(fields, [block])
         elseif block.head== :line
             continue
         elseif block.head == :(=) || block.head == :function
@@ -30,24 +34,17 @@ macro class(ClsName, Cbody)
             if fname == ClsName
                 append!(cons, [block])
             elseif fname == :__init__
-                @assert !hasInit "Can't define multiple __init__"
                 hasInit = true
                 setFnName!(block, ClsName)
                 self = getFnSelf(block, ClsName)
                 deleteFnSelf!(block)
                 prepend!(block.args[2].args, [:($self = $ClsName(()))])
                 append!(block.args[2].args, [:($self)])
-                append!(method_str, [string(block)])
+                append!(cons, [block])
             else
-                self = getFnSelf(block, ClsName)
-                setFnSelf!(block, :($self::$ClsName))
-                append!(method_str, [string(block)])
-
-                fname = getFnName(block)
-                append!(fname.args, [:(OOPMacroT<:$AbsClsName)])
-                setFnSelf!(block, :($self::OOPMacroT))
-                setFnName!(block, fname)
-                append!(method_str, [string(block)])
+                fn = copy(block)
+                setFnSelfType!(fn, ClsName)
+                methods[getFnCall(fn)] = fn 
             end
         else
             error("@class: Case not handled")
@@ -55,74 +52,46 @@ macro class(ClsName, Cbody)
     end
 
 
-    # Keep fields name in OOPMacro module scope. Used when another class inherits ClsName
-    ClsFields[ClsName] = fields
-
-    if length(cons)>0
-        cons_str = join(cons,"\n") * "\n"
-    elseif hasInit
-        cons_str = "$ClsName(::Tuple{}) = new()"
-    else
-        cons_str = ""
-    end
-
-    clsDefStr = ["abstract $AbsClsName <: $AbsParentClsName",
-              """
-              type $ClsName <: $AbsClsName
-                  $(join(fields,"\n"))
-              """ * cons_str * """
-              end
-              """]
-
-    clsDefExpr = [parse(c) for c in clsDefStr]
-    methodsExpr = [parse(m) for m in method_str]
-    ClsMethods[ClsName] = Dict{String,Expr}()
-    for (str, expr) in zip(method_str, methodsExpr)
-        identifier = string(getFnCall(expr))
-        identifier = replace(identifier, " ","")
-        ClsMethods[ClsName][identifier] = expr
-    end
-
-
-    # eval type definition and method definition so for each type/method in user scope, we have a correspondence in OOPMacro scope. This enables us to determine which parent function to use in @super.
-    for c in clsDefExpr eval(c) end
-    for m in methodsExpr eval(m) end
-
-
-    # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, clsDefExpr..., methodsExpr...))
-end
-
-macro super(ParentClsName, Types, FCall)
-    params = getFnParam(FCall)
-    shouldInferenceType = isa(Types, Symbol)
-    argTypes = :(Tuple{$ParentClsName})
-
-    for i in 2:length(params)
-        if shouldInferenceType || Types.args[i] == :_
-            append!(argTypes.args, [Symbol(typeof(params[i]))])
-        else
-            append!(argTypes.args, [Types.args[i]])
+    ClsFnCalls = Set(keys(methods))
+    for parent in ParentClsNameLst
+        for pfn in values(ClsMethods[parent])
+            fn = copy(pfn)
+            setFnSelfType!(fn, ClsName)
+            fnCall = getFnCall(fn)
+            if haskey(methods, fnCall)
+                fName = getFnName(fn, withoutGeneric=true)
+                if !(fnCall in ClsFnCalls)
+                    error("Ambiguious Function Definition: Multiple definition of function $fName while $ClsName does not overwtie this function!!")
+                end
+                setFnName!(fn, Symbol(string("super_", parent, fName)), withoutGeneric=true)
+                methods[fnCall] = fn
+            else
+                methods[fnCall] = fn
+            end
         end
     end
 
-    fname = getFnName(FCall, withoutGeneric=true)
-    identifier = string(which(eval(fname), eval(argTypes)))
-    identifier = split(identifier, ") at ")[1] * ")"
-    identifier = replace(identifier, r"OOPMacro.", "")
-    identifier = replace(identifier, " ", "")
-    method = copy(ClsMethods[ParentClsName][identifier])
+    cons_str = join(cons,"\n") * "\n"
+    if hasInit
+        cons_str *= "$ClsName(::Tuple{}) = new()\n"
+    end
 
-    ClsName = isa(Types, Symbol)? Types: Types.args[1]
-    superFname = Symbol(string("super",fname))
-    self = getFnSelf(method)
-    setFnName!(method, superFname, withoutGeneric=true)
-    setFnSelf!(method, :($self::$ClsName))
+    clsDefStr = """
+              type $ClsName
+                  $(join(fields,"\n"))
+              """ * cons_str * """
+              end
+              """
 
-    setFnName!(FCall, superFname)
-    esc(Expr(:block, method, FCall))
+    # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
+    esc(Expr(:block, parse(clsDefStr), values(methods)...))
 end
 
+macro super(ParentClsName, FCall)
+    fname = getFnName(FCall, withoutGeneric=true)
+    setFnName!(FCall, Symbol(string("super_", ParentClsName, fname)), withoutGeneric=true)
+    esc(FCall)
+end
 
 
 end #module
