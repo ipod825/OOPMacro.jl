@@ -3,7 +3,7 @@ function getCAndP(cls)
         C, P = cls, [:Any]
     elseif cls.head == :curly
         C, P = cls, [:Any]
-    elseif cls.head == :call 
+    elseif cls.head == :call
         C = cls.args[1]
         P = cls.args[2:end]
     else
@@ -14,7 +14,7 @@ end
 
 
 function getAbstractCls(cls)
-    abs = x::Symbol -> x==:Any? :Any : Symbol(string("Abstract", cls))
+    abs = x::Symbol -> x==:Any ? :Any : Symbol(string("Abstract", cls))
     if isa(cls, Array)
         return map(abs, cls)
     else
