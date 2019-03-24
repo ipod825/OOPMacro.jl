@@ -1,5 +1,5 @@
 using OOPMacro
-using Base.Test
+using Test
 
 @class Parent begin
     pfield::Int

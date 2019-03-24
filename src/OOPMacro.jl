@@ -25,9 +25,11 @@ macro class(ClsName, Cbody)
     for (i, block) in enumerate(Cbody.args)
         if isa(block, Symbol)
             union!(fields, [:($block::Any)])
+        elseif isa(block, LineNumberNode)
+            continue
         elseif block.head == :(::)
             union!(fields, [block])
-        elseif block.head== :line
+        elseif block.head == :line
             continue
         elseif block.head == :(=) || block.head == :function
             fname = getFnName(block, withoutGeneric=true)
@@ -44,7 +46,7 @@ macro class(ClsName, Cbody)
             else
                 fn = copy(block)
                 setFnSelfType!(fn, ClsName)
-                methods[getFnCall(fn)] = fn 
+                methods[getFnCall(fn)] = fn
             end
         else
             error("@class: Case not handled")

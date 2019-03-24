@@ -1,5 +1,5 @@
 using OOPMacro
-using Base.Test
+using Test
 
 @class SimpleCls begin
     field0
