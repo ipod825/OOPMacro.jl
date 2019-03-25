@@ -79,14 +79,14 @@ macro class(ClsName, Cbody)
     end
 
     clsDefStr = """
-              type $ClsName
+              struct $ClsName
                   $(join(fields,"\n"))
               """ * cons_str * """
               end
               """
 
     # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, parse(clsDefStr), values(methods)...))
+    esc(Expr(:block, Meta.parse(clsDefStr), values(methods)...))
 end
 
 macro super(ParentClsName, FCall)
