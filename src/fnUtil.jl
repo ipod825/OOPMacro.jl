@@ -30,10 +30,7 @@ function findFnSelfArgNameSymbol(fun, ClsName=:Any)
     funCall = findFnCall(fun)
     self = funCall.args[2] # first arg
     if isa(self, Expr) && self.head == :parameters
-        #FIXME: not sure how or why we get here, so log like crazy
-        printtrace()
-        dump(funCall)
-        @show funCall.args[3]
+        # if there is kw args, it goes first..
         self = funCall.args[3]
     end
 

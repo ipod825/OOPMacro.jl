@@ -2,7 +2,6 @@ using Test
 
 funWithArgExpr = Meta.parse("fun1(self1::Class1, arg1::Int) = self1.field1")
 funWithGenericArgExpr = Meta.parse("fun1(self1::Class1, arg1::T) where T<:Int = self1.field1")
-dump(getFnName(Meta.parse("fun1(self1::Class1, arg1::T) where T<:Int = self1.field1")))
 
 function assertCall(fnCall)
     @test fnCall.head == :call
