@@ -1,5 +1,3 @@
-export @class, @super
-
 include("fnUtil.jl")
 include("clsUtil.jl")
 

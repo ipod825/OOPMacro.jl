@@ -2,6 +2,7 @@ using Test
 
 funWithArgExpr = Meta.parse("fun1(self1::Class1, arg1::Int) = self1.field1")
 funWithGenericArgExpr = Meta.parse("fun1(self1::Class1, arg1::T) where T<:Int = self1.field1")
+dump(getFnName(Meta.parse("fun1(self1::Class1, arg1::T) where T<:Int = self1.field1")))
 
 function assertCall(fnCall)
     @test fnCall.head == :call
@@ -11,6 +12,18 @@ function assertCall(fnCall)
 end
 assertCall(findFnCall(funWithArgExpr))
 assertCall(findFnCall(funWithGenericArgExpr))
+
+# maybe this should be wrapped in :where rather than :curly
+@test getFnName(funWithArgExpr) == Expr(:curly, :fun1)
+@test getFnName(funWithGenericArgExpr) == Expr(:curly, :fun1)
+
+function assertSetFnName(funExpr)
+    fun = copy(funExpr)
+    setFnName!(fun, Expr(:curly, :fun2))
+    @test getFnName(fun) == Expr(:curly, :fun2)
+end
+assertSetFnName(funWithArgExpr)
+assertSetFnName(funWithGenericArgExpr)
 
 @test findFnSelfArgNameSymbol(funWithArgExpr) == :self1
 @test findFnSelfArgNameSymbol(funWithGenericArgExpr) == :self1

@@ -72,29 +72,13 @@ function deleteFnSelf!(fun)
     end
 end
 
-function getFnParam(fun)
-    printtrace()
-    funCall = findFnCall(fun)
-    # dump(funCall)
-    # println(stacktrace())
-    return funCall.args[2:end]
-end
+# No usages of this, so not bothering to support and thus add tests for this..
+# function getFnParam(fun)
+#     funCall = findFnCall(fun)
+#     return funCall.args[2:end]
+# end
 
-function setFnName!(fun, name; withoutGeneric=false)
-    printtrace()
-    if withoutGeneric
-        funCall = findFnCall(fun)
-        if isa(funCall.args[1], Symbol)
-            funCall.args[1] = name
-        else
-            funCall.args[1].args[1] = name
-        end
-    else
-        funCall = findFnCall(fun)
-        funCall.args[1] = name
-    end
-end
-
+""" Get the name of the function duh """
 function getFnName(fun; withoutGeneric=false)
     funCall = findFnCall(fun)
     name = funCall.args[1]
@@ -107,10 +91,26 @@ function getFnName(fun; withoutGeneric=false)
         end
     else
         if isa(name, Symbol)
+            # maybe this should be :where
             return Expr(:curly, name)
         else
             return name
         end
+    end
+end
+
+""" Set the name of the function duh """
+function setFnName!(fun, name; withoutGeneric=false)
+    if withoutGeneric
+        funCall = findFnCall(fun)
+        if isa(funCall.args[1], Symbol)
+            funCall.args[1] = name
+        else
+            funCall.args[1].args[1] = name
+        end
+    else
+        funCall = findFnCall(fun)
+        funCall.args[1] = name
     end
 end
 
