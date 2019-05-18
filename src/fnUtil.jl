@@ -94,9 +94,6 @@ function setFnName!(fun, name; withoutGeneric=false)
 end
 
 function getFnName(fun; withoutGeneric=false)
-    # dump(fun)
-    # println(stacktrace())
-
     funCall = findFnCall(fun)
     name = funCall.args[1]
 
@@ -116,10 +113,6 @@ function getFnName(fun; withoutGeneric=false)
 end
 
 function setFnSelfArgType!(fun, ClsName)
-    printtrace()
-    @show fun
     selfArgNameSymbol = findFnSelfArgNameSymbol(fun)
-    @show selfArgNameSymbol
     setFnSelf!(fun, :($selfArgNameSymbol::$ClsName))
-    @show fun
 end

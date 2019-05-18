@@ -19,8 +19,22 @@ function assertSetFnSelf(funExpr)
     fun = copy(funExpr)
     setFnSelf!(fun, :(self2::Class2))
     @test findFnSelfArgNameSymbol(fun) == :self2
+    funCall = findFnCall(fun)
+    @test funCall.args[2].args[1] == :self2
+    @test funCall.args[2].args[2] == :Class2
 end
 assertSetFnSelf(funWithArgExpr)
 assertSetFnSelf(funWithGenericArgExpr)
+
+function assertSetFnSelfArgType(funExpr)
+    fun = copy(funExpr)
+    setFnSelfArgType!(fun, :(Class2))
+    @test findFnSelfArgNameSymbol(fun) == :self1
+    funCall = findFnCall(fun)
+    @test funCall.args[2].args[1] == :self1
+    @test funCall.args[2].args[2] == :Class2
+end
+assertSetFnSelfArgType(funWithArgExpr)
+assertSetFnSelfArgType(funWithGenericArgExpr)
 
 # function setFnSelfArgType!(fun, ClsName)
