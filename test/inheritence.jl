@@ -1,4 +1,3 @@
-using OOPMacro
 using Test
 
 @class Parent begin
