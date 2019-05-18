@@ -37,4 +37,11 @@ end
 assertSetFnSelfArgType(funWithArgExpr)
 assertSetFnSelfArgType(funWithGenericArgExpr)
 
-# function setFnSelfArgType!(fun, ClsName)
+function assertDeleteFnSelf(funExpr)
+    fun = copy(funExpr)
+    deleteFnSelf!(fun)
+    funCall = findFnCall(fun)
+    @test funCall.args[2].args[1] == :arg1
+end
+assertDeleteFnSelf(funWithArgExpr)
+assertDeleteFnSelf(funWithGenericArgExpr)

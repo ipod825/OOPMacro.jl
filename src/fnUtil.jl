@@ -6,7 +6,7 @@ function printtrace()
 end
 
 """
-find the actual function call
+Find the actual function call
     return example :(:call, :functionName, :arg1, :arg2, ...)
 """
 function findFnCall(funExpr)
@@ -59,14 +59,16 @@ function setFnSelf!(funExpr, selfArgExpr)
         funCall.args[2] = selfArgExpr
     end
 end
-
+"""
+Delete the first argument
+"""
 function deleteFnSelf!(fun)
     funCall = findFnCall(fun)
     self = funCall.args[2]
     if isa(self, Expr) && self.head == :parameters
-        deleteat!(fun.args[1].args, 3)
+        deleteat!(funCall.args, 3)
     else
-        deleteat!(fun.args[1].args, 2)
+        deleteat!(funCall.args, 2)
     end
 end
 
@@ -112,6 +114,9 @@ function getFnName(fun; withoutGeneric=false)
     end
 end
 
+"""
+Set the type of the first argument
+"""
 function setFnSelfArgType!(fun, ClsName)
     selfArgNameSymbol = findFnSelfArgNameSymbol(fun)
     setFnSelf!(fun, :($selfArgNameSymbol::$ClsName))
