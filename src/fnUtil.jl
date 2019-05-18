@@ -47,12 +47,12 @@ function findFnSelfArgNameSymbol(fun, ClsName=:Any)
     return self
 end
 
-""" Overwrite the first arg """
+"""
+Overwrite the first arg with
+selfArgExpr eg. :(self::MyClass)
+"""
 function setFnSelf!(funExpr, selfArgExpr)
-    printtrace()
-    dump(funExpr)
     funCall = findFnCall(funExpr)
-    dump(funCall)
     if isa(funCall.args[2], Expr) && funCall.args[2].head == :parameters
         funCall.args[3] = selfArgExpr
     else

@@ -9,14 +9,18 @@ function assertCall(fnCall)
     @test fnCall.args[2].args[1] == :self1
     @test fnCall.args[3].args[1] == :arg1
 end
-
 assertCall(findFnCall(funWithArgExpr))
 assertCall(findFnCall(funWithGenericArgExpr))
 
 @test findFnSelfArgNameSymbol(funWithArgExpr) == :self1
 @test findFnSelfArgNameSymbol(funWithGenericArgExpr) == :self1
 
-#function setFnSelf!(fun, selfArgExpr)
+function assertSetFnSelf(funExpr)
+    fun = copy(funExpr)
+    setFnSelf!(fun, :(self2::Class2))
+    @test findFnSelfArgNameSymbol(fun) == :self2
+end
+assertSetFnSelf(funWithArgExpr)
+assertSetFnSelf(funWithGenericArgExpr)
 
-#
 # function setFnSelfArgType!(fun, ClsName)
