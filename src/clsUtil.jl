@@ -24,13 +24,17 @@ end
 
 
 function copyFields(ParentClsNameLst, ClsFields)
-    res = Set{Expr}()
+    res = Vector{Expr}()
     for parent in ParentClsNameLst
         conflict = intersect(res, ClsFields[parent])
         if length(conflict)!=0
             warn(join(conflict, ", ") * " in $patent overwritten")
         end
-        res = union(res, ClsFields[parent])
+        for f in ClsFields[parent]
+            if !(f in res)
+                push!(res, f)
+            end
+        end
     end
     return res
 end

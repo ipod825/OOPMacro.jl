@@ -135,6 +135,7 @@ cvalue = c.cfield
 
 
 # Future Work
+- write unit test for each function in clsUtil and OOPMacroImpl
 - override getproperty() to make more natural usage of
  'methods'
 - maybe don't require manually setting the self arg when declaring methods; rathre specify @static if it is not a object method

@@ -3,7 +3,7 @@ include("clsUtil.jl")
 
 #= ClsMethods = Dict{Symbol, Dict{Expr, Expr}}() =#
 ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
-ClsFields = Dict(:Any=>Set{Expr}())
+ClsFields = Dict(:Any=>Vector{Expr}())
 
 
 macro class(ClsName, Cbody)
@@ -30,7 +30,6 @@ macro class(ClsName, Cbody)
             continue
         elseif block.head == :(=) || block.head == :function
             fname = getFnName(block, withoutGeneric=true)
-            @show fname
             if fname == ClsName
                 append!(cons, [block])
             elseif fname == :__init__
@@ -43,9 +42,7 @@ macro class(ClsName, Cbody)
                 append!(cons, [block])
             else
                 fn = copy(block)
-                @show fn
                 setFnSelfArgType!(fn, ClsName)
-                @show fn
                 methods[findFnCall(fn)] = fn
             end
         else
@@ -58,11 +55,8 @@ macro class(ClsName, Cbody)
     for parent in ParentClsNameLst
         for pfn in values(ClsMethods[parent])
             fn = copy(pfn)
-            @show fn
             setFnSelfArgType!(fn, ClsName)
-            @show fn
             fnCall = findFnCall(fn)
-            @show fnCall
             if haskey(methods, fnCall)
                 fName = getFnName(fn, withoutGeneric=true)
                 if !(fnCall in ClsFnCalls)
@@ -87,8 +81,6 @@ macro class(ClsName, Cbody)
               """ * cons_str * """
               end
               """
-    println(clsDefStr)
-    println(methods)
     # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
     esc(Expr(:block, Meta.parse(clsDefStr), values(methods)...))
 end

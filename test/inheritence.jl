@@ -24,6 +24,9 @@ end
 
 p = Parent(0)
 c = Child(0,1,2)
+@test c.pfield == 0
+@test c.pfield2 == 1
+@test c.cfield == 2
 pvalue = p.pfield
 pvalue2 = c.pfield2
 cvalue = c.cfield
