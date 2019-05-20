@@ -30,11 +30,7 @@ function copyFields(ParentClsNameLst, ClsFields)
         if length(conflict)!=0
             warn(join(conflict, ", ") * " in $patent overwritten")
         end
-        for f in ClsFields[parent]
-            if !(f in res)
-                push!(res, f)
-            end
-        end
+        res = union(res, ClsFields[parent])
     end
     return res
 end
