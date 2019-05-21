@@ -1,5 +1,4 @@
-using OOPMacro
-using Base.Test
+using Test
 
 @class SimpleCls begin
     field0
@@ -16,11 +15,11 @@ using Base.Test
     end
 
     #= Generic function is also supported =#
-    fun0{T<:Int}(self::SimpleCls, x::T) = self.field0 + x
-    fun1{T<:Int}(self, x::T, y::T) = begin
+    fun0(self::SimpleCls, x::T) where T<:Int = self.field0 + x
+    fun1(self, x::T, y::T) where T<:Int = begin
         self.field1 + x
     end
-    function fun2{T<:Int}(self, x::T)
+    function fun2(self, x::T) where T<:Int
         self.field2 + x
     end
 end
@@ -33,7 +32,6 @@ s = SimpleCls(0,1,2)
 @test fun1(s, 2., 3) == 3
 @test fun2(s, 2.) == 4
 @test fun2(s, 2) == 4
-fun2(s,"a")
 @test_throws(MethodError, fun2(s,"a"))
 
 @class SimpleCls1 begin
