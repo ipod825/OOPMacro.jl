@@ -79,10 +79,21 @@ macro class(ClsName, Cbody)
               mutable struct $ClsName
                   $(join(fields,"\n"))
               """ * cons_str * """
+          end"""
+
+    # this allows calling functions on the class..
+    dotAccStr = """
+              function Base.getproperty(self::$ClsName, name::Symbol)
+                  if name ∈ fieldnames(typeof(self))
+                      getfield(self, name)
+                  else
+                      (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
+                  end
               end
               """
+
     # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, Meta.parse(clsDefStr), values(methods)...))
+    esc(Expr(:block, Meta.parse(clsDefStr), Meta.parse(dotAccStr), values(methods)...))
 end
 
 macro super(ParentClsName, FCall)

@@ -30,6 +30,7 @@ s = SimpleCls(0,1,2)
 @test s.field2 == 2
 @test fun0(s, 2.) == 2
 @test fun1(s, 2., 3) == 3
+@test s.fun1(2., 3) == 3
 @test fun2(s, 2.) == 4
 @test fun2(s, 2) == 4
 @test_throws(MethodError, fun2(s,"a"))
@@ -41,7 +42,10 @@ s = SimpleCls(0,1,2)
 end
 s1 = SimpleCls1(0)
 @test fun0(s1, 1) == 2
+@test s1.fun0(1) == 2
 @test fun0(s1, 1, 2) == 3
+@test s1.fun0(1, 2) == 3
 @test fun1(s1, 1) == 4
 @test fun1(s1, 1, 2) == 5
 @test fun1(s1, 1, 2, z=3) == 6
+@test s1.fun1(1, 2, z=3) == 6
