@@ -84,7 +84,7 @@ macro class(ClsName, Cbody)
     # this allows calling functions on the class..
     dotAccStr = """
               function Base.getproperty(self::$ClsName, name::Symbol)
-                  if name ∈ fieldnames(typeof(self))
+                  if name ∈ fieldnames($ClsName)
                       getfield(self, name)
                   else
                       (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
