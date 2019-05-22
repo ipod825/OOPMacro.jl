@@ -1,3 +1,5 @@
+
+""" Get the class name and parents """
 function getCAndP(cls)
     if isa(cls, Symbol)
         C, P = cls, [:Any]
