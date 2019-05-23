@@ -1,7 +1,9 @@
 using Test
 
-# test invalid option validation:
-@test_throws(LoadError, @macroexpand @class invalidoption MyCls begin end)
+@testset "invalid option validation" begin
+    @test_throws(LoadError, @macroexpand @class invalidoption MyCls begin end)
+end
+
 
 @class BasicDotOpr begin
     field0::Int
@@ -13,10 +15,14 @@ end
     fun0(self::SimpleCls, x) = self.field0 + x
 end
 
-bdo = BasicDotOpr(1)
-@test fun0(bdo, 1) == 2
-@test bdo.fun0(1) == 2
+@testset "basic test with dot operator" begin
+    bdo = BasicDotOpr(1)
+    @test fun0(bdo, 1) == 2
+    @test bdo.fun0(1) == 2
+end
 
-bndo = BasicDotOpr(1)
-@test_throws(UndefVarError, fun0(nbdo, 1))
-@test bndo.fun0(1) == 2
+@testset "basic test without dot operator" begin
+    bndo = BasicDotOpr(1)
+    @test_throws(UndefVarError, fun0(nbdo, 1))
+    @test bndo.fun0(1) == 2
+end
