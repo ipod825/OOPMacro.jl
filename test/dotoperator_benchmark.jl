@@ -22,7 +22,7 @@ bg["DotOpr"]["get_field1"] = @benchmarkable o.field1 setup=(o = B1DotOpr(rand(In
 bg["NoDotOpr"]["get_field1"] = @benchmarkable o.field1 setup=(o = B1NoDotOpr(rand(Int)))
 
 tune!(bg)
-results = run(bg, verbose = true, seconds = 1)
+results = run(bg, verbose = true, seconds = 5)
 
 med = median(results)
 println(med)

@@ -97,10 +97,10 @@ macro class(args...)
     # this allows calling functions on the class..
     dotAccStr = """
               function Base.getproperty(self::$clsName, name::Symbol)
-                  if name ∈ fieldnames($clsName)
-                      getfield(self, name)
-                  else
-                      (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
+                  try
+                    getfield(self, name)
+                  catch
+                    (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
                   end
               end
               """
