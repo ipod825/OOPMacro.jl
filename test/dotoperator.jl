@@ -18,8 +18,9 @@ end
 
     @testset "tests with dot operator" begin
         @testset "basic test" begin
-            bdo = BasicDotOpr(1)
-            @code_llvm bdo.field0
+            @show bdo = BasicDotOpr(1)
+            @time bdo.field0
+            @time bdo.field0
             @time bdo.field0
             @test_throws(ErrorException, bdo.invalidfield)
             @test fun0(bdo, 1) == 2
@@ -29,8 +30,9 @@ end
 
     @testset "tests without dot operator" begin
         @testset "basic test" begin
-            bndo = BasicNoDotOpr(1)
-            @code_llvm bndo.field0
+            @show bndo = BasicNoDotOpr(1)
+            @time bndo.field0
+            @time bndo.field0
             @time bndo.field0
             @test_throws(ErrorException, bndo.invalidfield)
             @test fun0(bndo, 1) == 2
