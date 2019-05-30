@@ -95,15 +95,16 @@ macro class(args...)
           end"""
 
     # this allows calling functions on the class..
+    clsFnNameList = join(map(fn->":$(getFnName(fn, withoutGeneric=true)),", collect(values(methods))),"")
     dotAccStr = """
-              function Base.getproperty(self::$clsName, name::Symbol)
-                  try
-                    getfield(self, name)
-                  catch
-                    (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
-                  end
-              end
-              """
+        function Base.getproperty(self::$clsName, name::Symbol)
+            if isdefined(self, name) || name ∉ ($clsFnNameList)
+                getfield(self, name)
+            else
+                (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
+            end
+        end
+        """
     blockSections = [Meta.parse(clsDefStr), values(methods)...]
     if supportDotOperator
         push!(blockSections, Meta.parse(dotAccStr))

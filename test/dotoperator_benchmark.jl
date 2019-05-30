@@ -4,13 +4,13 @@ using Statistics
 if !isdefined(Main, :B1DotOpr)
     @class B1DotOpr begin
         field1::Int
-        fun1(self::SimpleCls, x) = self.field0 + x
+        fun1(self::SimpleCls, x) = self.field1 + x
     end
 end
 if !isdefined(Main, :B1NoDotOpr)
     @class nodotoperator B1NoDotOpr begin
         field1::Int
-        fun1(self::SimpleCls, x) = self.field0 + x
+        fun1(self::SimpleCls, x) = self.field1 + x
     end
 end
 
