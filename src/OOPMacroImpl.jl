@@ -6,6 +6,8 @@ ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
 ClsFields = Dict(:Any=>Vector{Expr}())
 validOptions = (:nodotoperator,)
 
+OOPMacroModule=@__MODULE__
+clsFnDefDict=WeakKeyDict{Any,Dict{Symbol,Function}}()
 macro class(args...)
     if length(args) < 2
         error("At least a class name and body must be specified.")
@@ -26,7 +28,6 @@ macro class(args...)
 
     ClsFields[clsName] = fields = copyFields(ParentClsNameLst, ClsFields)
     ClsMethods[clsName] = methods = Dict{Expr,Expr}()
-
 
     cons = Any[]
     hasInit = false
@@ -63,7 +64,6 @@ macro class(args...)
         end
     end
 
-
     ClsFnCalls = Set(keys(methods))
     for parent in ParentClsNameLst
         for pfn in values(ClsMethods[parent])
@@ -73,7 +73,7 @@ macro class(args...)
             if haskey(methods, fnCall)
                 fName = getFnName(fn, withoutGeneric=true)
                 if !(fnCall in ClsFnCalls)
-                    error("Ambiguious Function Definition: Multiple definition of function $fName while $clsName does not overwtie this function!!")
+                    error("Ambiguious Function Definition: Multiple definition of function $fName while $clsName does not overwrite this function!!")
                 end
                 setFnName!(fn, Symbol(string("super_", parent, fName)), withoutGeneric=true)
                 methods[fnCall] = fn
@@ -95,13 +95,23 @@ macro class(args...)
           end"""
 
     # this allows calling functions on the class..
-    clsFnNameList = join(map(fn->":$(getFnName(fn, withoutGeneric=true)),", collect(values(methods))),"")
+    clsFnNames = map(fn->"$(getFnName(fn, withoutGeneric=true))", collect(values(methods)))
+    clsFnNameList = join(map(name->":$name,", clsFnNames),"")
     dotAccStr = """
-        function Base.getproperty(self::$clsName, name::Symbol)
-            if isdefined(self, name) || name ∉ ($clsFnNameList)
-                getfield(self, name)
+        function Base.getproperty(self::$clsName, nameSymbol::Symbol)
+            if isdefined(self, nameSymbol) || nameSymbol ∉ ($clsFnNameList)
+                getfield(self, nameSymbol)
             else
-                (args...; kwargs...)->eval(:(\$name(\$self, \$args...; \$kwargs...)))
+                if haskey($(OOPMacroModule).clsFnDefDict, self)
+                    fnDict=$(OOPMacroModule).clsFnDefDict[self]
+                else
+                    fnDict=$(OOPMacroModule).clsFnDefDict[self] = Dict{Symbol,Function}()
+                end
+                if haskey(fnDict, nameSymbol)
+                    fnDict[nameSymbol]
+                else
+                    fnDict[nameSymbol]=(args...; kwargs...)->eval(:(\$nameSymbol(\$self, \$args...; \$kwargs...)))
+                end
             end
         end
         """

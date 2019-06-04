@@ -24,7 +24,13 @@ end
             @time bdo.field0
             @test_throws(ErrorException, bdo.invalidfield)
             @test fun0(bdo, 1) == 2
+            @time fun0(bdo, 1) == 2
+            @time fun0(bdo, 1) == 2
+            @time fun0(bdo, 1) == 2
             @test bdo.fun0(1) == 2
+            @time bdo.fun0(1) == 2
+            @time bdo.fun0(1) == 2
+            @time bdo.fun0(1) == 2
         end
     end
 
