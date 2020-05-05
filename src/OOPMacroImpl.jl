@@ -4,22 +4,36 @@ include("clsUtil.jl")
 #= ClsMethods = Dict{Symbol, Dict{Expr, Expr}}() =#
 ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
 ClsFields = Dict(:Any=>Vector{Expr}())
+validOptions = (:nodotoperator,)
 
+OOPMacroModule=@__MODULE__
+clsFnDefDict=WeakKeyDict{Any,Dict{Symbol,Function}}()
+macro class(args...)
+    if length(args) < 2
+        error("At least a class name and body must be specified.")
+    end
+    options = args[1:end-2]
+    clsName = args[end-1]
+    cBody = args[end]
+    for o in options
+        if o ∉ validOptions
+            error("$o is not a valid option. Valid options are: $(join(validOptions, ", "))")
+        end
+    end
+    supportDotOperator = :nodotoperator ∉ options
 
-macro class(ClsName, Cbody)
-    ClsName, ParentClsNameLst = getCAndP(ClsName)
-    AbsClsName = getAbstractCls(ClsName)
+    clsName, ParentClsNameLst = getCAndP(clsName)
+    AbsClsName = getAbstractCls(clsName)
     AbsParentClsName = getAbstractCls(ParentClsNameLst)
 
-    ClsFields[ClsName] = fields = copyFields(ParentClsNameLst, ClsFields)
-    ClsMethods[ClsName] = methods = Dict{Expr,Expr}()
-
+    ClsFields[clsName] = fields = copyFields(ParentClsNameLst, ClsFields)
+    ClsMethods[clsName] = methods = Dict{Expr,Expr}()
 
     cons = Any[]
     hasInit = false
 
     # record fields and methods separately
-    for (i, block) in enumerate(Cbody.args)
+    for (i, block) in enumerate(cBody.args)
         if isa(block, Symbol)
             union!(fields, [:($block::Any)])
         elseif isa(block, LineNumberNode)
@@ -30,19 +44,19 @@ macro class(ClsName, Cbody)
             continue
         elseif block.head == :(=) || block.head == :function
             fname = getFnName(block, withoutGeneric=true)
-            if fname == ClsName
+            if fname == clsName
                 append!(cons, [block])
             elseif fname == :__init__
                 hasInit = true
-                setFnName!(block, ClsName)
-                self = findFnSelfArgNameSymbol(block, ClsName)
+                setFnName!(block, clsName)
+                self = findFnSelfArgNameSymbol(block, clsName)
                 deleteFnSelf!(block)
-                prepend!(block.args[2].args, [:($self = $ClsName(()))])
+                prepend!(block.args[2].args, [:($self = $clsName(()))])
                 append!(block.args[2].args, [:($self)])
                 append!(cons, [block])
             else
                 fn = copy(block)
-                setFnSelfArgType!(fn, ClsName)
+                setFnSelfArgType!(fn, clsName)
                 methods[findFnCall(fn)] = fn
             end
         else
@@ -50,17 +64,16 @@ macro class(ClsName, Cbody)
         end
     end
 
-
     ClsFnCalls = Set(keys(methods))
     for parent in ParentClsNameLst
         for pfn in values(ClsMethods[parent])
             fn = copy(pfn)
-            setFnSelfArgType!(fn, ClsName)
-            fnCall = findFnCall(fn)
+            setFnSelfArgType!(fn, clsName)
+            fnCall = findFncons_strCall(fn)
             if haskey(methods, fnCall)
                 fName = getFnName(fn, withoutGeneric=true)
                 if !(fnCall in ClsFnCalls)
-                    error("Ambiguious Function Definition: Multiple definition of function $fName while $ClsName does not overwtie this function!!")
+                    error("Ambiguious Function Definition: Multiple definition of function $fName while $clsName does not overwrite this function!!")
                 end
                 setFnName!(fn, Symbol(string("super_", parent, fName)), withoutGeneric=true)
                 methods[fnCall] = fn
@@ -71,18 +84,49 @@ macro class(ClsName, Cbody)
     end
 
     cons_str = join(cons,"\n") * "\n"
+    @show hasInit
     if hasInit
-        cons_str *= "$ClsName(::Tuple{}) = new()\n"
+        cons_str *= "$clsName(::Tuple{}) = new()\n"
     end
-
+# println("cons_str ",con_str)
     clsDefStr = """
-              mutable struct $ClsName
+              mutable struct $clsName
                   $(join(fields,"\n"))
               """ * cons_str * """
-              end
-              """
-    # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, Meta.parse(clsDefStr), values(methods)...))
+              # fun1::Function
+          end"""
+println("clsDefStr ",clsDefStr)
+    # this allows calling functions on the class..
+    clsFnNames = map(fn->"$(getFnName(fn, withoutGeneric=true))", collect(values(methods)))
+    clsFnNameList = join(map(name->":$name,", clsFnNames),"")
+    # dotAccStr = """
+    #     function Base.getproperty(self::$clsName, nameSymbol::Symbol)
+    #         if isdefined(self, nameSymbol) #|| nameSymbol ∉ ($clsFnNameList)
+    #             getfield(self, nameSymbol)
+    #         else
+    #             $(OOPMacroModule).clsFnDefDict[self][nameSymbol]
+    #         end
+    #     end
+    #     """
+    dotAccStr2 = """
+        function __initOOPMacroFunctions(self::$clsName)
+            #fnDict=$(OOPMacroModule).clsFnDefDict[self] = Dict{Symbol,Function}()
+            #for nameSymbol in ($clsFnNameList)
+                #self.fun1=(args...; kwargs...)->eval(:(\$nameSymbol(\$self, \$args...; \$kwargs...)))
+                self.fun1=(args...; kwargs...)->eval(:(fun1(\$self, \$args...; \$kwargs...)))
+            #end
+            self
+        end
+        """
+    blockSections = [Meta.parse(clsDefStr), values(methods)...]
+    if supportDotOperator
+        push!(blockSections, #Meta.parse(dotAccStr),
+        Meta.parse(dotAccStr2)
+        )
+    end
+
+    # Escape here because we want clsName and the methods be defined in user scope instead of OOPMacro module scope.
+    esc(Expr(:block, blockSections...))
 end
 
 macro super(ParentClsName, FCall)

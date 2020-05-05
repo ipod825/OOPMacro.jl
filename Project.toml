@@ -1,13 +1,15 @@
 name = "OOPMacro"
 uuid = "90c472d1-064c-5c63-af2e-229f1fdb5f26"
 authors = ["Shih-Ming Wang <swang150@ucsc.edu>", "Marius Kruger <amanic@gmail.com>"]
-version = "0.3.0"
+version = "0.4.0"
 
 [compat]
 julia = ">= 0.7"
 
 [extras]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test"]
+test = ["Test", "BenchmarkTools", "Statistics"]

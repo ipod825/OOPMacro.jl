@@ -31,13 +31,21 @@ pvalue = p.pfield
 pvalue2 = c.pfield2
 cvalue = c.cfield
 @test pfun(p) == pvalue
+@test p.pfun() == pvalue
 @test pfun(c) == cvalue
+@test c.pfun() == cvalue
 @test pfunAdd(p,1) == pvalue + 1
+@test p.pfunAdd(1) == pvalue + 1
 @test pfunAdd(c,1) == cvalue + 1
+@test c.pfunAdd(1) == cvalue + 1
 @test_throws(MethodError, pfunAdd(c,"a"))
 
 @test cfunSuper(c) == pvalue
+@test c.cfunSuper() == pvalue
 @test cfunAddSuper(c,1) == pvalue+1
+@test c.cfunAddSuper(1) == pvalue+1
 
 @test cfunSuper2(c) == pvalue2
+@test c.cfunSuper2() == pvalue2
 @test cfunAddSuper2(c,1) == pvalue2+1
+@test c.cfunAddSuper2(1) == pvalue2+1
