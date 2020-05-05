@@ -69,7 +69,7 @@ macro class(args...)
         for pfn in values(ClsMethods[parent])
             fn = copy(pfn)
             setFnSelfArgType!(fn, clsName)
-            fnCall = findFnCall(fn)
+            fnCall = findFncons_strCall(fn)
             if haskey(methods, fnCall)
                 fName = getFnName(fn, withoutGeneric=true)
                 if !(fnCall in ClsFnCalls)
@@ -84,40 +84,45 @@ macro class(args...)
     end
 
     cons_str = join(cons,"\n") * "\n"
+    @show hasInit
     if hasInit
         cons_str *= "$clsName(::Tuple{}) = new()\n"
     end
-
+# println("cons_str ",con_str)
     clsDefStr = """
               mutable struct $clsName
                   $(join(fields,"\n"))
               """ * cons_str * """
+              # fun1::Function
           end"""
-
+println("clsDefStr ",clsDefStr)
     # this allows calling functions on the class..
     clsFnNames = map(fn->"$(getFnName(fn, withoutGeneric=true))", collect(values(methods)))
     clsFnNameList = join(map(name->":$name,", clsFnNames),"")
-    dotAccStr = """
-        function Base.getproperty(self::$clsName, nameSymbol::Symbol)
-            if isdefined(self, nameSymbol) || nameSymbol ∉ ($clsFnNameList)
-                getfield(self, nameSymbol)
-            else
-                if haskey($(OOPMacroModule).clsFnDefDict, self)
-                    fnDict=$(OOPMacroModule).clsFnDefDict[self]
-                else
-                    fnDict=$(OOPMacroModule).clsFnDefDict[self] = Dict{Symbol,Function}()
-                end
-                if haskey(fnDict, nameSymbol)
-                    fnDict[nameSymbol]
-                else
-                    fnDict[nameSymbol]=(args...; kwargs...)->eval(:(\$nameSymbol(\$self, \$args...; \$kwargs...)))
-                end
-            end
+    # dotAccStr = """
+    #     function Base.getproperty(self::$clsName, nameSymbol::Symbol)
+    #         if isdefined(self, nameSymbol) #|| nameSymbol ∉ ($clsFnNameList)
+    #             getfield(self, nameSymbol)
+    #         else
+    #             $(OOPMacroModule).clsFnDefDict[self][nameSymbol]
+    #         end
+    #     end
+    #     """
+    dotAccStr2 = """
+        function __initOOPMacroFunctions(self::$clsName)
+            #fnDict=$(OOPMacroModule).clsFnDefDict[self] = Dict{Symbol,Function}()
+            #for nameSymbol in ($clsFnNameList)
+                #self.fun1=(args...; kwargs...)->eval(:(\$nameSymbol(\$self, \$args...; \$kwargs...)))
+                self.fun1=(args...; kwargs...)->eval(:(fun1(\$self, \$args...; \$kwargs...)))
+            #end
+            self
         end
         """
     blockSections = [Meta.parse(clsDefStr), values(methods)...]
     if supportDotOperator
-        push!(blockSections, Meta.parse(dotAccStr))
+        push!(blockSections, #Meta.parse(dotAccStr),
+        Meta.parse(dotAccStr2)
+        )
     end
 
     # Escape here because we want clsName and the methods be defined in user scope instead of OOPMacro module scope.

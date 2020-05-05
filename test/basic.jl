@@ -4,6 +4,9 @@ using Test
     field0
     field1::Int
     field2::Int
+    SimpleCls(field0, field1::Int, field2::Int) = begin
+        self = __initOOPMacroFunctions(new(field0, field1, field2))
+    end
 
     #= Supports different style of function declaration =#
     fun0(self::SimpleCls, x) = self.field0 + x
@@ -37,6 +40,9 @@ s = SimpleCls(0,1,2)
 
 @class SimpleCls1 begin
     field0::Int
+    SimpleCls1(field0::Int) = begin
+        self = __initOOPMacroFunctions(new(field0))
+    end
     fun0(self, x, y=1) = self.field0 + x + y
     fun1(self, x, y=1; z=2) = self.field0 + x + y + z
 end
