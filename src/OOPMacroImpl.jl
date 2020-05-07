@@ -2,11 +2,44 @@ include("fnUtil.jl")
 include("clsUtil.jl")
 
 #= ClsMethods = Dict{Symbol, Dict{Expr, Expr}}() =#
-ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
-ClsFields = Dict(:Any=>Vector{Expr}())
+# if !(@isdefined ClsMethods)
+#     global ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
+# end
+# if !(@isdefined ClsFields)
+#     global ClsFields = Dict(:Any=>Vector{Expr}())
+# end
 
+# const ClsMethods::Dict{Any,Dict{Expr, Expr}}
+# const ClsFields::Dict{Any,Vector{Expr}}
+
+function __init__()
+    @show  @__MODULE__, "__init__"
+    global _ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
+    global _ClsFields = Dict(:Any=>Vector{Expr}())
+end
+
+# @show @__MODULE__
+# @show keys(ClsMethods)
 
 macro class(ClsName, Cbody)
+
+    @show @__MODULE__
+    @show __module__
+    # @show keys(ClsMethods)
+    # @show ClsFields
+
+    if isdefined(__module__, :__OOPMacro_ClsMethods)
+        ClsMethods = __module__.__OOPMacro_ClsMethods
+    else
+        ClsMethods = _ClsMethods
+    end
+    if isdefined(__module__, :__OOPMacro_ClsFields)
+        ClsFields = __module__.__OOPMacro_ClsFields
+    else
+        ClsFields = _ClsFields
+    end
+    @show keys(ClsFields)
+
     ClsName, ParentClsNameLst = getCAndP(ClsName)
     AbsClsName = getAbstractCls(ClsName)
     AbsParentClsName = getAbstractCls(ParentClsNameLst)
