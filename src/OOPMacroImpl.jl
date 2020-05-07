@@ -27,16 +27,19 @@ macro class(ClsName, Cbody)
     @show __module__
     # @show keys(ClsMethods)
     # @show ClsFields
+    injections=[]
 
     if isdefined(__module__, :__OOPMacro_ClsMethods)
         ClsMethods = __module__.__OOPMacro_ClsMethods
     else
         ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
+        push!(injections, :(__OOPMacro_ClsMethods = $ClsMethods))
     end
     if isdefined(__module__, :__OOPMacro_ClsFields)
         ClsFields = __module__.__OOPMacro_ClsFields
     else
         ClsFields = Dict(:Any=>Vector{Expr}())
+        push!(injections, :(__OOPMacro_ClsFields = $ClsFields))
     end
     @show keys(ClsFields)
 
@@ -115,7 +118,7 @@ macro class(ClsName, Cbody)
               end
               """
     # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, Meta.parse(clsDefStr), :(__OOPMacro_ClsMethods = $ClsMethods), :(__OOPMacro_ClsFields = $ClsFields),  values(methods)...))
+    esc(Expr(:block, Meta.parse(clsDefStr), injections...,  values(methods)...))
 end
 
 macro super(ParentClsName, FCall)
