@@ -12,11 +12,11 @@ include("clsUtil.jl")
 # const ClsMethods::Dict{Any,Dict{Expr, Expr}}
 # const ClsFields::Dict{Any,Vector{Expr}}
 
-function __init__()
-    @show  @__MODULE__, "__init__"
-    global _ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
-    global _ClsFields = Dict(:Any=>Vector{Expr}())
-end
+# function __init__()
+#     @show  @__MODULE__, "__init__"
+#     global _ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
+#     global _ClsFields = Dict(:Any=>Vector{Expr}())
+# end
 
 # @show @__MODULE__
 # @show keys(ClsMethods)
@@ -31,12 +31,12 @@ macro class(ClsName, Cbody)
     if isdefined(__module__, :__OOPMacro_ClsMethods)
         ClsMethods = __module__.__OOPMacro_ClsMethods
     else
-        ClsMethods = _ClsMethods
+        ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
     end
     if isdefined(__module__, :__OOPMacro_ClsFields)
         ClsFields = __module__.__OOPMacro_ClsFields
     else
-        ClsFields = _ClsFields
+        ClsFields = Dict(:Any=>Vector{Expr}())
     end
     @show keys(ClsFields)
 
@@ -115,7 +115,7 @@ macro class(ClsName, Cbody)
               end
               """
     # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, Meta.parse(clsDefStr), values(methods)...))
+    esc(Expr(:block, Meta.parse(clsDefStr), :(__OOPMacro_ClsMethods = $ClsMethods), :(__OOPMacro_ClsFields = $ClsFields),  values(methods)...))
 end
 
 macro super(ParentClsName, FCall)
