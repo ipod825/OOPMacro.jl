@@ -2,19 +2,19 @@ include("fnUtil.jl")
 include("clsUtil.jl")
 
 macro class(ClsName, Cbody)
-    injections=[]
+    cache_in_module=[]
     if isdefined(__module__, :__OOPMacro_ClsMethods)
         ClsMethods = __module__.__OOPMacro_ClsMethods
     else
         #= ClsMethods = Dict{Symbol, Dict{Expr, Expr}}() =#
         ClsMethods = Dict(:Any=>Dict{Expr, Expr}())
-        push!(injections, :(__OOPMacro_ClsMethods = $ClsMethods))
+        push!(cache_in_module, :(__OOPMacro_ClsMethods = $ClsMethods))
     end
     if isdefined(__module__, :__OOPMacro_ClsFields)
         ClsFields = __module__.__OOPMacro_ClsFields
     else
         ClsFields = Dict(:Any=>Vector{Expr}())
-        push!(injections, :(__OOPMacro_ClsFields = $ClsFields))
+        push!(cache_in_module, :(__OOPMacro_ClsFields = $ClsFields))
     end
 
     ClsName, ParentClsNameLst = getCAndP(ClsName)
@@ -91,8 +91,8 @@ macro class(ClsName, Cbody)
               """ * cons_str * """
               end
               """
-    # Escape here because we want ClsName and the methods be defined in user scope instead of OOPMacro module scope.
-    esc(Expr(:block, Meta.parse(clsDefStr), injections...,  values(methods)...))
+    # Escape here because we want ClsName and the methods be defined in the module issuing the @Class macro instead of OOPMacro module scope.
+    esc(Expr(:block, Meta.parse(clsDefStr), cache_in_module...,  values(methods)...))
 end
 
 macro super(ParentClsName, FCall)
