@@ -91,7 +91,7 @@ macro class(ClsName, Cbody)
               """ * cons_str * """
               end
               """
-    # Escape here because we want ClsName and the methods be defined in the module issuing the @Class macro instead of OOPMacro module scope.
+    # Escape here because we want ClsName and the methods be defined in the module issuing the @class macro instead of OOPMacro module scope.
     esc(Expr(:block, Meta.parse(clsDefStr), cache_in_module...,  values(methods)...))
 end
 

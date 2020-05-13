@@ -27,4 +27,7 @@ module MultiUse
     cvalue = c.cfield
     @test pfun(p) == pvalue
     @test pfun(c) == cvalue
+
+    mup = SomeOtherModule.MUParent(2)
+    @test mup.otherField == 2
 end
