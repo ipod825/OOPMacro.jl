@@ -1,7 +1,12 @@
 using OOPMacro
 import OOPMacro: findFnCall, findFnSelfArgNameSymbol, setFnSelf!, deleteFnSelf!, setFnName!, getFnName, setFnSelfArgType!
 
-include("fnUtil.jl")
-include("basic.jl")
-include("constructor.jl")
-include("inheritence.jl")
+testFiles = ("fnUtil.jl",
+"basic.jl",
+"constructor.jl",
+"inheritence.jl",
+"multi-module.jl")
+
+@testset "Testing: $filename" for filename in testFiles
+    include(filename)
+end

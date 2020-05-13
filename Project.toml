@@ -1,7 +1,7 @@
 name = "OOPMacro"
 uuid = "90c472d1-064c-5c63-af2e-229f1fdb5f26"
 authors = ["Shih-Ming Wang <swang150@ucsc.edu>", "Marius Kruger <amanic@gmail.com>"]
-version = "0.3.0"
+version = "0.4.0"
 
 [compat]
 julia = ">= 0.7"
